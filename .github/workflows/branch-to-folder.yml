@@ -3,39 +3,43 @@ name: Move branch contents to folder in main
 on:
   push:
     branches:
-      - '**'   # Trigger on any branch push
+      - '**'
 
 jobs:
   sync-branch-to-main:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository with full history
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Ensure the full history is fetched
+          fetch-depth: 0  # Ensure the full history is fetched
 
-      # Set up Git credentials to use the GITHUB_TOKEN
       - name: Set up Git
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-      # Get the current branch name
       - name: Get branch name
         id: vars
         run: echo "branch_name=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
 
-      # Check out the main branch
       - name: Check out main branch
         run: git checkout main
 
-      # Create a folder named after the branch and move the files
-      - name: Create folder and move files from branch
+      - name: Create folder and verify
         run: |
           branch_name="${{ env.branch_name }}"
-          mkdir -p "./${branch_name}"
+          if [ ! -d "./${branch_name}" ]; then
+            mkdir -p "./${branch_name}"
+            echo "Directory ./${branch_name} created successfully."
+          else
+            echo "Directory ./${branch_name} already exists."
+          fi
+
+      - name: Move files into folder
+        run: |
+          branch_name="${{ env.branch_name }}"
           git checkout ${{ env.branch_name }} -- .
           for item in *; do
             if [ "$item" != "${branch_name}" ] && [ "$item" != ".git" ]; then
@@ -44,12 +48,10 @@ jobs:
           done
           git add .
 
-      # Commit the changes to the main branch
       - name: Commit changes
         run: |
           git commit -m "Move contents of branch ${{ env.branch_name }} to folder ${{ env.branch_name }} in main"
 
-      # Push the changes using GITHUB_TOKEN
       - name: Push changes
         run: |
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} main
