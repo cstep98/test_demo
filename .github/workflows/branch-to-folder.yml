@@ -16,7 +16,10 @@ jobs:
           fetch-depth: 0  # Ensure full history is fetched
 
       - name: Perform Git Pull
-        run: git pull origin main
+        run: git pull
+
+      - name: Git Fetch All
+        run: git fetch --all
         
       - name: Set up Git user
         run: |
