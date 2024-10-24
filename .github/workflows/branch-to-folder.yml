@@ -34,9 +34,12 @@ jobs:
       # Create a folder named after the branch and copy the files
       - name: Create folder and copy files
         run: |
-          mkdir -p "./${{ env.branch_name }}"
+          branch_name="${{ env.branch_name }}"
+          mkdir -p "./${branch_name}"
           git checkout ${{ env.branch_name }} -- .
-          mv ./* "./${{ env.branch_name }}/"
+          # Exclude the folder from being moved into itself
+          shopt -s extglob
+          mv !("${branch_name}") "./${branch_name}/"
           git add .
 
       # Commit changes to the main branch
