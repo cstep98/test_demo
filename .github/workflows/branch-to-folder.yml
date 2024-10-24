@@ -24,8 +24,19 @@ jobs:
         id: vars
         run: echo "branch_name=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
 
+      # Print the current directory and contents to debug any issues
+      - name: Print working directory
+        run: pwd
+
+      - name: List files in root before branch checkout
+        run: ls -alh
+
       - name: Checkout the branch where files exist
         run: git checkout ${{ env.branch_name }}
+
+      # Print files after branch checkout to ensure contents are there
+      - name: List files after branch checkout
+        run: ls -alh
 
       - name: Move branch contents to main branch
         run: |
@@ -37,22 +48,33 @@ jobs:
           # Ensure the demo folder exists in main
           if [ ! -d "./${branch_name}" ]; then
             mkdir -p "./${branch_name}"
+            echo "Folder ${branch_name} created."
+          else
+            echo "Folder ${branch_name} already exists."
           fi
+
+          # List files in main branch to check for correctness
+          echo "Files in main branch before moving files:"
+          ls -alh
 
           # Checkout the files from the feature branch into the workspace
           git checkout ${{ env.branch_name }} -- .
 
           # Move files to the correct folder
           for item in *; do
-            if [ "$item" != "${branch_name}" ] && [ "$item" != ".git" ]; then
+            if [ "$item" != "${branch_name}" ] && [ "$item" != ".git" ] && [ -f "$item" ]; then
+              echo "Moving $item to ./${branch_name}/"
               mv "$item" "./${branch_name}/"
             fi
           done
 
+          echo "Files in ${branch_name} after move:"
+          ls -alh "./${branch_name}"
+
       - name: Commit the changes to main
         run: |
           git add .
-          git commit -m "Move contents of branch ${{ env.branch_name }} to folder ${{ env.branch_name }} in main"
+          git commit -m "Move contents of branch ${{ env.branch_name }} to folder ${{ env.branch_name }} in main" || echo "Nothing to commit."
 
       - name: Push changes to main
         run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} main
