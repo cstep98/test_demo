@@ -3,7 +3,7 @@ name: Move branch contents to folder in main
 on:
   push:
     branches:
-      - '**'
+      - 'demo-*'
 
 jobs:
   sync-branch-to-main:
