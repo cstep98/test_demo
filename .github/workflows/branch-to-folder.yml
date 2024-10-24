@@ -3,7 +3,7 @@ name: Move branch contents to folder in main
 on:
   push:
     branches:
-      - 'demo-*'
+      - 'demo-*' # using 'demo-*' in place of what would be 'vescom-*'
 
 jobs:
   sync-branch-to-main:
@@ -23,8 +23,8 @@ jobs:
         
       - name: Set up Git user
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions" # make sure the github actions user has read/write permissions in repository
+          git config user.email "actions@github.com" # make sure the github actions user has read/write permissions in repository
 
       - name: Get branch name
         id: vars
