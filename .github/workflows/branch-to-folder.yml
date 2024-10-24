@@ -32,15 +32,25 @@ jobs:
         run: git checkout main
 
       # Create a folder named after the branch and copy the files
-      - name: Create folder and copy files
+      - name: Create folder and move files
         run: |
           branch_name="${{ env.branch_name }}"
+          
+          # Ensure the directory exists
           mkdir -p "./${branch_name}"
+
+          # Check out the branch content, but exclude the .git folder
           git checkout ${{ env.branch_name }} -- .
-          # Exclude the folder from being moved into itself
-          shopt -s extglob
-          mv !("${branch_name}") "./${branch_name}/"
+          
+          # Move all files except the new folder into the folder
+          for item in *; do
+            if [ "$item" != "${branch_name}" ] && [ "$item" != ".git" ]; then
+              mv "$item" "./${branch_name}/"
+            fi
+          done
+          
           git add .
+
 
       # Commit changes to the main branch
       - name: Commit changes
