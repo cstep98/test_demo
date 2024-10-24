@@ -13,9 +13,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Ensure the full history is fetched
+          fetch-depth: 0  # Ensure full history is fetched
 
-      - name: Set up Git
+      - name: Set up Git user
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
@@ -24,34 +24,35 @@ jobs:
         id: vars
         run: echo "branch_name=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
 
-      - name: Check out main branch
-        run: git checkout main
+      - name: Checkout the branch where files exist
+        run: git checkout ${{ env.branch_name }}
 
-      - name: Create folder and verify
+      - name: Move branch contents to main branch
         run: |
           branch_name="${{ env.branch_name }}"
+
+          # Switch to the main branch
+          git checkout main
+
+          # Ensure the demo folder exists in main
           if [ ! -d "./${branch_name}" ]; then
             mkdir -p "./${branch_name}"
-            echo "Directory ./${branch_name} created successfully."
-          else
-            echo "Directory ./${branch_name} already exists."
           fi
 
-      - name: Move files into folder
-        run: |
-          branch_name="${{ env.branch_name }}"
+          # Checkout the files from the feature branch into the workspace
           git checkout ${{ env.branch_name }} -- .
+
+          # Move files to the correct folder
           for item in *; do
             if [ "$item" != "${branch_name}" ] && [ "$item" != ".git" ]; then
               mv "$item" "./${branch_name}/"
             fi
           done
-          git add .
 
-      - name: Commit changes
+      - name: Commit the changes to main
         run: |
+          git add .
           git commit -m "Move contents of branch ${{ env.branch_name }} to folder ${{ env.branch_name }} in main"
 
-      - name: Push changes
-        run: |
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} main
+      - name: Push changes to main
+        run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} main
